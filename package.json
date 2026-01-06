@@ -1,0 +1,41 @@
+{
+  "name": "civicrm-js-sdk",
+  "version": "1.0.0",
+  "description": "JavaScript/TypeScript SDK for CiviCRM API v3 and v4",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tslint -p tsconfig.json",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "civicrm",
+    "api",
+    "sdk",
+    "typescript",
+    "javascript"
+  ],
+  "author": "esakkirajaravenantech",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/esakkirajaravenantech/civicrm-js-sdk.git"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "prettier": "^3.1.0",
+    "tslint": "^6.1.3",
+    "typescript": "^5.3.0"
+  },
+  "files": [
+    "lib/**/*",
+    "LICENSE",
+    "README.md"
+  ]
+}
