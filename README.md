@@ -1,406 +1,506 @@
-# CiviCRM JavaScript/TypeScript SDK
+# civicrm-js-sdk
 
-A comprehensive JavaScript/TypeScript SDK for interacting with CiviCRM API v3 and v4.
+TypeScript/JavaScript SDK for [CiviCRM](https://civicrm.org) - Simple and elegant API for React, Vue, Angular and Node.js.
+
+<p align="center">
+  <img src="https://img.shields.io/npm/v/civicrm-js-sdk?style=flat-square" />
+  <img src="https://img.shields.io/npm/l/civicrm-js-sdk?style=flat-square" />
+  <img src="https://img.shields.io/npm/dt/civicrm-js-sdk?style=flat-square" />
+</p>
 
 ## Features
 
-- 🚀 Support for both CiviCRM API v3 and v4
-- 🔐 Multiple authentication methods (API Key, OAuth/Bearer Token)
-- 📦 Full TypeScript support with type definitions
-- 🎯 Entity CRUD operations made simple
-- 📁 File upload and download capabilities
-- ⚡ Promise-based API with async/await support
-- 🛠️ Extensible and modular architecture
+- 🔒 **Secure** - API key and site key authentication
+- 🚀 **Simple** - Intuitive API similar to frappe-js-sdk
+- 📦 **TypeScript** - Full type definitions for all CiviCRM entities
+- 🔄 **Dual API Support** - Works with both API v3 and API v4
+- 🎯 **Entity-based** - Direct access to Contact, Membership, Activity, etc.
+- ⚡ **Lightweight** - Only axios as dependency
 
 ## Installation
 
 ```bash
 npm install civicrm-js-sdk
-```
-
-or
-
-```bash
+# or
 yarn add civicrm-js-sdk
+# or
+pnpm add civicrm-js-sdk
 ```
 
 ## Quick Start
 
-### Basic Initialization
-
 ```typescript
-import { CiviCRMApp } from "civicrm-js-sdk";
+import { CiviCRM } from 'civicrm-js-sdk';
 
-// Initialize with API key authentication
-const civicrm = new CiviCRMApp(
-  "https://your-site.org",  // CiviCRM base URL
-  "your-site-key"            // Site key
-);
-```
-
-### Initialization with Token Authentication
-
-```typescript
-import { CiviCRMApp } from "civicrm-js-sdk";
-
-// Initialize with Bearer token
-const civicrm = new CiviCRMApp(
-  "https://your-site.org",
-  "your-site-key",
-  {
-    useToken: true,
-    token: () => "your-bearer-token",  // Can be async function
-    tokenType: "Bearer"
-  }
-);
-```
-
-## Usage Examples
-
-### Authentication
-
-```typescript
-// Login with API key
-await civicrm.auth().login({
-  apiKey: "your-api-key",
-  key: "your-user-key"
+// Initialize the SDK
+const civicrm = new CiviCRM({
+  baseUrl: 'https://your-civicrm.org',
+  apiKey: 'your-api-key',
+  siteKey: 'your-site-key',
+  apiVersion: 4, // Optional: default is 4, can be 3
 });
 
-// Get current user
-const user = await civicrm.auth().getCurrentUser();
-console.log(user);
+// Get contacts
+const contacts = await civicrm.Contact.get({ limit: 10 });
 
-// Validate token
-const validation = await civicrm.auth().validateToken();
-if (validation.valid) {
-  console.log("Token is valid", validation.user);
-}
-
-// Logout
-civicrm.auth().logout();
-```
-
-### Entity Operations
-
-#### Get a Single Contact
-
-```typescript
-// Get contact by ID
-const contact = await civicrm.entity().get("Contact", 123);
-console.log(contact);
-```
-
-#### Get List of Contacts
-
-```typescript
-// Get all contacts with filters
-const contacts = await civicrm.entity().getList("Contact", {
-  filters: {
-    contact_type: "Individual",
-    is_deleted: 0
-  },
-  fields: ["id", "display_name", "email"],
-  limit: 10,
-  offset: 0,
-  sort: { id: "DESC" }
+// Create a contact
+const newContact = await civicrm.Contact.create({
+  contact_type: 'Individual',
+  first_name: 'John',
+  last_name: 'Doe',
 });
 
-console.log(contacts);
-```
+// Update a contact
+await civicrm.Contact.update(123, { first_name: 'Jane' });
 
-#### Create a Contact
-
-```typescript
-// Create new contact
-const newContact = await civicrm.entity().create("Contact", {
-  contact_type: "Individual",
-  first_name: "John",
-  last_name: "Doe",
-  email: "john.doe@example.com"
-});
-
-console.log("Created contact:", newContact);
-```
-
-#### Update a Contact
-
-```typescript
-// Update existing contact
-const updatedContact = await civicrm.entity().update("Contact", 123, {
-  first_name: "Jane",
-  last_name: "Smith"
-});
-
-console.log("Updated contact:", updatedContact);
-```
-
-#### Delete a Contact
-
-```typescript
-// Delete contact
-const deleted = await civicrm.entity().delete("Contact", 123);
-console.log("Deleted:", deleted);
-```
-
-#### Get Count
-
-```typescript
-// Get count of contacts
-const count = await civicrm.entity().getCount("Contact", {
-  contact_type: "Individual"
-});
-
-console.log("Total contacts:", count);
-```
-
-### Working with Activities
-
-```typescript
-// Create an activity
-const activity = await civicrm.entity().create("Activity", {
-  activity_type_id: 1,
-  subject: "Meeting",
-  activity_date_time: "2024-01-15 10:00:00",
-  source_contact_id: 123,
-  target_contact_id: [456]
-});
-
-// Get activities
-const activities = await civicrm.entity().getList("Activity", {
-  filters: {
-    source_contact_id: 123
-  },
-  limit: 20
-});
-```
-
-### API Calls
-
-#### Using API v3
-
-```typescript
-// Make a custom API v3 call
-const result = await civicrm.api().callV3("Contact", "get", {
-  sequential: 1,
-  return: ["display_name", "email"],
-  contact_type: "Individual"
-});
-
-console.log(result.values);
-```
-
-#### Using API v4
-
-```typescript
-// Make a custom API v4 call
-const result = await civicrm.api().callV4("Contact", "get", {
-  select: ["id", "display_name", "email"],
-  where: [["contact_type", "=", "Individual"]],
-  limit: 25
-});
-
-console.log(result.values);
-```
-
-#### Generic API Requests
-
-```typescript
-// Generic GET request
-const data = await civicrm.api().get("/custom/endpoint", {
-  param1: "value1"
-});
-
-// Generic POST request
-const response = await civicrm.api().post("/custom/endpoint", {
-  data: "value"
-});
-```
-
-### File Operations
-
-#### Upload a File
-
-```typescript
-// Upload file with progress tracking
-const fileInput = document.querySelector('input[type="file"]');
-const file = fileInput.files[0];
-
-const uploadedFile = await civicrm.file().uploadFile(
-  file,
-  {
-    entity: "Contact",
-    entity_id: 123,
-    description: "Profile picture"
-  },
-  (progress) => {
-    console.log(`Upload progress: ${progress}%`);
-  }
-);
-
-console.log("File uploaded:", uploadedFile);
-```
-
-#### Download a File
-
-```typescript
-// Download file
-const fileData = await civicrm.file().downloadFile(456);
-
-// Create download link in browser
-const url = window.URL.createObjectURL(fileData.data);
-const a = document.createElement("a");
-a.href = url;
-a.download = fileData.filename;
-a.click();
-window.URL.revokeObjectURL(url);
-```
-
-#### Get File Info
-
-```typescript
-// Get file information
-const fileInfo = await civicrm.file().getFileInfo(456);
-console.log(fileInfo);
-```
-
-#### Delete a File
-
-```typescript
-// Delete file
-const deleted = await civicrm.file().deleteFile(456);
-console.log("File deleted:", deleted);
-```
-
-## TypeScript Usage
-
-The SDK is written in TypeScript and provides full type definitions:
-
-```typescript
-import { CiviCRMApp, GetListOptions, User, EntityResponse } from "civicrm-js-sdk";
-
-// Type-safe entity operations
-interface Contact {
-  id: number;
-  display_name: string;
-  email: string;
-  contact_type: string;
-}
-
-const options: GetListOptions = {
-  filters: { contact_type: "Individual" },
-  fields: ["id", "display_name", "email"],
-  limit: 10
-};
-
-const contacts = await civicrm.entity().getList<Contact>("Contact", options);
-contacts.forEach((contact: Contact) => {
-  console.log(contact.display_name);
-});
+// Delete a contact
+await civicrm.Contact.delete(123);
 ```
 
 ## API Reference
 
-### CiviCRMApp
+### Initialization
 
-Main class for initializing the SDK.
+```typescript
+import { CiviCRM } from 'civicrm-js-sdk';
 
-**Constructor:**
-- `url` (string): Base URL of CiviCRM installation
-- `siteKey` (string): CiviCRM site key
-- `tokenParams` (optional): Token authentication parameters
-- `name` (optional): Instance name
-- `customHeaders` (optional): Custom HTTP headers
+const civicrm = new CiviCRM({
+  baseUrl: 'https://your-civicrm.org',  // Required
+  apiKey: 'your-api-key',                // Required
+  siteKey: 'your-site-key',              // Required
+  apiVersion: 4,                         // Optional: 3 or 4 (default: 4)
+  timeout: 30000,                        // Optional: request timeout in ms
+  customHeaders: {                       // Optional: custom headers
+    'X-Custom-Header': 'value'
+  },
+});
+```
 
-**Methods:**
-- `auth()`: Get authentication module
-- `entity()`: Get entity CRUD module
-- `api()`: Get API module
-- `file()`: Get file operations module
+### Available Entities
 
-### CiviCRMAuth
+The SDK provides direct access to these CiviCRM entities:
 
-Authentication and user management.
+- `civicrm.Contact`
+- `civicrm.Email`
+- `civicrm.Phone`
+- `civicrm.Address`
+- `civicrm.Membership`
+- `civicrm.Activity`
+- `civicrm.Contribution`
+- `civicrm.Participant`
+- `civicrm.Event`
+- `civicrm.Relationship`
+- `civicrm.Note`
+- `civicrm.Group`
+- `civicrm.GroupContact`
+- `civicrm.Tag`
+- `civicrm.EntityTag`
+- `civicrm.CustomField`
+- `civicrm.CustomGroup`
+- `civicrm.OptionValue`
+- `civicrm.OptionGroup`
+- `civicrm.UFMatch`
+- `civicrm.LineItem`
+- `civicrm.MembershipType`
+- `civicrm.MembershipStatus`
+- `civicrm.ContributionRecur`
+- `civicrm.PriceSet`
+- `civicrm.PriceField`
+- `civicrm.PriceFieldValue`
 
-**Methods:**
-- `login(credentials)`: Login with API key
-- `logout()`: Clear authentication
-- `getCurrentUser()`: Get current user information
-- `validateToken()`: Validate authentication token
-- `getUser()`: Get cached user data
+For other entities, use:
+```typescript
+const campaigns = await civicrm.entity('Campaign').get();
+```
 
-### CiviCRMEntity
+### Entity Methods
 
-Entity CRUD operations.
+Each entity provides these methods:
 
-**Methods:**
-- `get(entity, id, params?)`: Get single entity
-- `getList(entity, options?)`: Get list of entities
-- `create(entity, data)`: Create new entity
-- `update(entity, id, data)`: Update entity
-- `delete(entity, id)`: Delete entity
-- `getCount(entity, filters?)`: Get entity count
+#### `get(params?)` - Get multiple records
 
-### CiviCRMAPI
+```typescript
+// Get all contacts
+const contacts = await civicrm.Contact.get();
 
-Custom API calls for v3 and v4.
+// Get with API v4 style filters
+const contacts = await civicrm.Contact.get({
+  where: [
+    ['contact_type', '=', 'Individual'],
+    ['is_deleted', '=', false],
+  ],
+  select: ['id', 'display_name', 'email'],
+  orderBy: { created_date: 'DESC' },
+  limit: 10,
+  offset: 0,
+});
 
-**Methods:**
-- `callV3(entity, action, params?)`: API v3 call
-- `callV4(entity, action, params?)`: API v4 call
-- `get(endpoint, params?)`: Generic GET request
-- `post(endpoint, data?)`: Generic POST request
+// Get with simple filters (works with both v3 and v4)
+const contacts = await civicrm.Contact.get({
+  contact_type: 'Individual',
+  is_deleted: false,
+});
+```
 
-### CiviCRMFile
+#### `getOne(id, params?)` - Get a single record by ID
 
-File operations.
+```typescript
+const contact = await civicrm.Contact.getOne(123);
+const contact = await civicrm.Contact.getOne(123, { 
+  select: ['id', 'display_name', 'email'] 
+});
+```
 
-**Methods:**
-- `uploadFile(file, fileArgs?, onProgress?)`: Upload file
-- `downloadFile(fileId)`: Download file
-- `deleteFile(fileId)`: Delete file
-- `getFileInfo(fileId)`: Get file information
+#### `create(data)` - Create a new record
+
+```typescript
+const contact = await civicrm.Contact.create({
+  contact_type: 'Individual',
+  first_name: 'John',
+  last_name: 'Doe',
+  email_primary: {
+    email: 'john@example.com',
+  },
+});
+
+const membership = await civicrm.Membership.create({
+  contact_id: 123,
+  membership_type_id: 1,
+  join_date: '2024-01-01',
+  start_date: '2024-01-01',
+});
+```
+
+#### `update(id, data)` - Update an existing record
+
+```typescript
+const updated = await civicrm.Contact.update(123, {
+  first_name: 'Jane',
+  job_title: 'CEO',
+});
+```
+
+#### `save(data)` - Create or update based on ID presence
+
+```typescript
+// Create new (no id)
+const contact = await civicrm.Contact.save({
+  contact_type: 'Individual',
+  first_name: 'John',
+});
+
+// Update existing (has id)
+const updated = await civicrm.Contact.save({
+  id: 123,
+  first_name: 'Jane',
+});
+```
+
+#### `delete(id)` - Delete a record
+
+```typescript
+await civicrm.Contact.delete(123);
+```
+
+#### `getCount(params?)` - Get count of records
+
+```typescript
+const count = await civicrm.Contact.getCount({
+  contact_type: 'Individual',
+});
+```
+
+#### `exists(params)` - Check if records exist
+
+```typescript
+const exists = await civicrm.Contact.exists({
+  email: 'john@example.com',
+});
+```
+
+#### `first(params?)` - Get the first matching record
+
+```typescript
+const contact = await civicrm.Contact.first({
+  email: 'john@example.com',
+});
+```
+
+#### `action(actionName, params?)` - Call custom entity action
+
+```typescript
+const fields = await civicrm.Contact.action('getfields');
+```
+
+### Raw API Calls
+
+For advanced usage, you can make raw API calls:
+
+```typescript
+// API v3 call
+const result = await civicrm.callV3('Contact', 'get', {
+  contact_type: 'Individual',
+});
+
+// API v4 call  
+const result = await civicrm.callV4('Contact', 'get', {
+  where: [['contact_type', '=', 'Individual']],
+});
+
+// Auto-select version based on config
+const result = await civicrm.call('Contact', 'get', { ... });
+```
+
+### Switch API Version
+
+```typescript
+// Check current version
+const version = civicrm.getApiVersion(); // 3 or 4
+
+// Switch version
+civicrm.setApiVersion(3);
+```
+
+## Usage Examples
+
+### Complete Member Registration Flow
+
+```typescript
+import { CiviCRM } from 'civicrm-js-sdk';
+
+const civicrm = new CiviCRM({
+  baseUrl: 'https://your-civicrm.org',
+  apiKey: 'your-api-key',
+  siteKey: 'your-site-key',
+});
+
+async function registerMember(formData: any) {
+  // 1. Create contact
+  const contact = await civicrm.Contact.create({
+    contact_type: 'Individual',
+    first_name: formData.firstName,
+    last_name: formData.lastName,
+  });
+
+  // 2. Add email
+  await civicrm.Email.create({
+    contact_id: contact.id,
+    email: formData.email,
+    location_type_id: 1,
+    is_primary: 1,
+  });
+
+  // 3. Add phone
+  if (formData.phone) {
+    await civicrm.Phone.create({
+      contact_id: contact.id,
+      phone: formData.phone,
+      location_type_id: 1,
+      phone_type_id: 1,
+      is_primary: 1,
+    });
+  }
+
+  // 4. Add address
+  await civicrm.Address.create({
+    contact_id: contact.id,
+    street_address: formData.address,
+    city: formData.city,
+    postal_code: formData.postcode,
+    country_id: formData.countryId,
+    state_province_id: formData.stateId,
+    location_type_id: 1,
+    is_primary: 1,
+  });
+
+  // 5. Create membership
+  const membership = await civicrm.Membership.create({
+    contact_id: contact.id,
+    membership_type_id: formData.membershipTypeId,
+    join_date: new Date().toISOString().split('T')[0],
+    start_date: new Date().toISOString().split('T')[0],
+  });
+
+  return { contact, membership };
+}
+```
+
+### Get User Profile with Related Data
+
+```typescript
+async function getUserProfile(contactId: number) {
+  // Get all related data in parallel
+  const [contact, emails, phones, addresses, memberships] = await Promise.all([
+    civicrm.Contact.getOne(contactId),
+    civicrm.Email.get({ where: [['contact_id', '=', contactId]] }),
+    civicrm.Phone.get({ where: [['contact_id', '=', contactId]] }),
+    civicrm.Address.get({ where: [['contact_id', '=', contactId], ['is_primary', '=', 1]] }),
+    civicrm.Membership.get({ 
+      where: [['contact_id', '=', contactId]],
+      orderBy: { start_date: 'DESC' },
+      limit: 1,
+    }),
+  ]);
+
+  return {
+    ...contact,
+    emails,
+    phones,
+    primaryAddress: addresses[0],
+    currentMembership: memberships[0],
+  };
+}
+```
+
+### Working with Custom Fields
+
+```typescript
+// Get custom field ID by name
+const customFields = await civicrm.CustomField.get({
+  where: [['name', '=', 'Interests']],
+  select: ['id'],
+});
+const interestsFieldId = customFields[0]?.id;
+
+// Read custom field value
+const contact = await civicrm.Contact.getOne(123, {
+  select: ['id', 'display_name', `custom_${interestsFieldId}`],
+});
+
+// Update custom field value
+await civicrm.Contact.update(123, {
+  [`custom_${interestsFieldId}`]: 'Music, Art, Technology',
+});
+```
+
+### Using with Vue/Nuxt
+
+```typescript
+// composables/useCiviCRM.ts
+import { CiviCRM } from 'civicrm-js-sdk';
+
+let civicrmInstance: CiviCRM | null = null;
+
+export function useCiviCRM() {
+  if (!civicrmInstance) {
+    const config = useRuntimeConfig();
+    civicrmInstance = new CiviCRM({
+      baseUrl: config.public.civicrmUrl,
+      apiKey: config.civicrmApiKey,
+      siteKey: config.civicrmSiteKey,
+    });
+  }
+  return civicrmInstance;
+}
+
+// In your component
+const civicrm = useCiviCRM();
+const contacts = await civicrm.Contact.get({ limit: 10 });
+```
+
+### Using with React
+
+```typescript
+// hooks/useCiviCRM.ts
+import { useMemo } from 'react';
+import { CiviCRM } from 'civicrm-js-sdk';
+
+export function useCiviCRM() {
+  return useMemo(() => new CiviCRM({
+    baseUrl: process.env.REACT_APP_CIVICRM_URL!,
+    apiKey: process.env.REACT_APP_CIVICRM_API_KEY!,
+    siteKey: process.env.REACT_APP_CIVICRM_SITE_KEY!,
+  }), []);
+}
+
+// In your component
+function ContactList() {
+  const civicrm = useCiviCRM();
+  const [contacts, setContacts] = useState([]);
+
+  useEffect(() => {
+    civicrm.Contact.get({ limit: 10 }).then(setContacts);
+  }, [civicrm]);
+
+  return <ul>{contacts.map(c => <li key={c.id}>{c.display_name}</li>)}</ul>;
+}
+```
+
+## TypeScript Support
+
+The SDK includes full TypeScript definitions:
+
+```typescript
+import { CiviCRM, Contact, Membership, Email } from 'civicrm-js-sdk';
+
+const civicrm = new CiviCRM({ ... });
+
+// Type-safe entity operations
+const contact: Contact = await civicrm.Contact.getOne(123);
+const memberships: Membership[] = await civicrm.Membership.get({
+  where: [['contact_id', '=', contact.id]],
+});
+
+// With generics for custom types
+interface MyContact extends Contact {
+  custom_interests?: string;
+}
+
+const myContact = await civicrm.Contact.getOne<MyContact>(123);
+console.log(myContact?.custom_interests);
+```
 
 ## Error Handling
 
-The SDK provides comprehensive error handling:
+```typescript
+import { CiviCRM, CiviCRMError } from 'civicrm-js-sdk';
+
+try {
+  const contact = await civicrm.Contact.getOne(999999);
+} catch (error) {
+  const civiError = error as CiviCRMError;
+  console.error('Error:', civiError.message);
+  console.error('Code:', civiError.error_code);
+  console.error('Details:', civiError.details);
+}
+```
+
+## Server-Side Proxy (Recommended)
+
+For security, don't expose API keys in client-side code. Use a server-side proxy:
 
 ```typescript
-try {
-  const contact = await civicrm.entity().get("Contact", 123);
-} catch (error) {
-  if (error.civicrmError) {
-    console.error("CiviCRM API Error:", error.message);
-    console.error("Error code:", error.errorCode);
-  } else {
-    console.error("Network or other error:", error.message);
+// Server endpoint (e.g., Next.js API route, Nuxt server route)
+// pages/api/civicrm.ts
+import { CiviCRM } from 'civicrm-js-sdk';
+
+const civicrm = new CiviCRM({
+  baseUrl: process.env.CIVICRM_URL,
+  apiKey: process.env.CIVICRM_API_KEY,
+  siteKey: process.env.CIVICRM_SITE_KEY,
+});
+
+export default async function handler(req, res) {
+  const { entity, action, params } = req.body;
+  try {
+    const result = await civicrm.call(entity, action, params);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 }
 ```
 
-## Building from Source
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Lint
-npm run lint
-
-# Format code
-npm run format
-```
-
 ## License
 
-MIT License - see LICENSE file for details.
+MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read our contributing guidelines first.
 
-## Support
+## Links
 
-For issues and questions, please use the GitHub issue tracker.
+- [CiviCRM Documentation](https://docs.civicrm.org/)
+- [CiviCRM API Explorer](https://docs.civicrm.org/dev/en/latest/api/)
+- [GitHub Repository](https://github.com/esakkirajaravenantech/civicrm-js-sdk)

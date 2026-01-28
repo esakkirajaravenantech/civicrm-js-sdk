@@ -1,85 +1,61 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { CiviCRMConfig, CiviCRMError } from '../types';
 
 /**
- * Configuration for creating an axios instance
+ * Create a configured Axios instance for CiviCRM API calls
  */
-export interface AxiosConfig {
-  baseURL: string;
-  siteKey: string;
-  useToken?: boolean;
-  tokenFn?: () => Promise<string> | string;
-  tokenType?: "Bearer" | "token";
-  customHeaders?: Record<string, string>;
+export function createAxiosClient(config: CiviCRMConfig): AxiosInstance {
+  const baseURL = config.baseUrl.replace(/\/+$/, '');
+  
+  const axiosConfig: AxiosRequestConfig = {
+    baseURL,
+    timeout: config.timeout ?? 30000,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...config.customHeaders,
+    },
+    withCredentials: false,
+    validateStatus: () => true,
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
+  };
+
+  const instance = axios.create(axiosConfig);
+
+  // Request interceptor to add auth params
+  instance.interceptors.request.use((reqConfig) => {
+    // Add API key and site key to params
+    const params = reqConfig.params || {};
+    params.api_key = config.apiKey;
+    params.key = config.siteKey;
+    reqConfig.params = params;
+    return reqConfig;
+  });
+
+  return instance;
 }
 
 /**
- * Creates an axios instance configured for CiviCRM API calls
- * @param config - Configuration object for axios
- * @returns Configured axios instance
+ * Parse CiviCRM error from response
  */
-export function createAxiosInstance(config: AxiosConfig): AxiosInstance {
-  const { baseURL, siteKey, useToken = false, tokenFn, tokenType = "Bearer", customHeaders = {} } = config;
-
-  const instance = axios.create({
-    baseURL,
-    headers: {
-      "Content-Type": "application/json",
-      ...customHeaders,
-    },
-  });
-
-  // Request interceptor for authentication
-  instance.interceptors.request.use(
-    async (requestConfig: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
-      // Add site_key to params
-      if (!requestConfig.params) {
-        requestConfig.params = {};
-      }
-      requestConfig.params.site_key = siteKey;
-
-      // Add token authentication if enabled
-      if (useToken && tokenFn) {
-        const token = await tokenFn();
-        if (token) {
-          if (tokenType === "Bearer") {
-            requestConfig.headers.Authorization = `Bearer ${token}`;
-          } else {
-            requestConfig.params.token = token;
-          }
-        }
-      }
-
-      return requestConfig;
-    },
-    error => {
-      return Promise.reject(error);
-    }
-  );
-
-  // Response interceptor for error handling
-  instance.interceptors.response.use(
-    response => {
-      // Check for CiviCRM API errors
-      if (response.data && response.data.is_error) {
-        const error: any = new Error(response.data.error_message || "CiviCRM API Error");
-        error.civicrmError = true;
-        error.errorCode = response.data.error_code;
-        error.response = response;
-        return Promise.reject(error);
-      }
-      return response;
-    },
-    (error: AxiosError) => {
-      // Format error message
-      if (error.response) {
-        const errorData: any = error.response.data;
-        if (errorData && errorData.error_message) {
-          error.message = errorData.error_message;
-        }
-      }
-      return Promise.reject(error);
-    }
-  );
-
-  return instance;
+export function parseError(error: any, defaultMessage: string): CiviCRMError {
+  if (error.response) {
+    const data = error.response.data;
+    return {
+      httpStatus: error.response.status,
+      httpStatusText: error.response.statusText,
+      message: data?.error_message || data?.message || defaultMessage,
+      error_code: data?.error_code,
+      error_message: data?.error_message,
+      is_error: 1,
+      details: data,
+    };
+  }
+  
+  return {
+    message: error?.message || defaultMessage,
+    is_error: 1,
+  };
 }
