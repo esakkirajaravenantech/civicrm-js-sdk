@@ -1,0 +1,54 @@
+{
+  "name": "civicrm-js-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript/JavaScript SDK for CiviCRM - Simple and elegant API for React, Vue, Angular and Node.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.js",
+      "types": "./lib/index.d.ts"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "civicrm",
+    "crm",
+    "api",
+    "sdk",
+    "typescript",
+    "javascript",
+    "react",
+    "vue",
+    "angular",
+    "nodejs",
+    "contact",
+    "membership",
+    "donation"
+  ],
+  "author": "esakkirajaravenantech",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/esakkirajaravenantech/civicrm-js-sdk"
+  }
+}
